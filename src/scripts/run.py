@@ -96,10 +96,16 @@ if __name__ == "__main__":
     # if the global map is needed, read the map files, e.g. /jackal_helper/worlds/BARN/map_files/map_pgm_xxx.pgm
     
     # DWA example
-    launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_DWA.launch')
-    nav_stack_process = subprocess.Popen([
-        'roslaunch',
-        launch_file,
+    # launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_DWA.launch')
+    # nav_stack_process = subprocess.Popen([
+    #     'roslaunch',
+    #     launch_file,
+    # ])
+    
+    my_process = subprocess.Popen([
+        'python',
+        'src/scripts/moving_planner.py',
+        '--world_idx', str(args.world_idx),
     ])
     
     # Make sure your navigation stack recives a goal of (0, 10, 0), which is 10 meters away
