@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-from astar import AStarPlanner, my_astar, show_animation
+from astar import AStarPlanner, my_astar
 import matplotlib.pyplot as plt
 import argparse
 def readMap2Np(num=1):
@@ -31,6 +31,7 @@ def readMapObstacles(world_idx=1):
   
   
 if __name__ == "__main__":
+  show_animation = True
   parser = argparse.ArgumentParser(description = 'my BARN navigation challenge')
   parser.add_argument('--world_idx', type=int, default=1, help='world index')
   args = parser.parse_args()
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     plt.plot(gx, gy, "xb")
     plt.grid(True)
     plt.axis("equal") 
-  a_star = AStarPlanner(ox, oy, 0.1, 0.4)
+  a_star = AStarPlanner(ox, oy, 0.1, 0.4, show_animation)
   rx, ry = a_star.planning(sx, sy, gx, gy)
   # print(rx, ry)
   if show_animation:  

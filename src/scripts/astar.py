@@ -7,11 +7,11 @@
 import math
 import matplotlib.pyplot as plt
 
-show_animation = True
+
 
 class AStarPlanner:
 
-    def __init__(self, ox, oy, resolution, rr):
+    def __init__(self, ox, oy, resolution, rr, show_animation=True):
 
         # """
         # Initialize grid map for a star planning
@@ -28,6 +28,7 @@ class AStarPlanner:
         self.x_width, self.y_width = 0, 0
         self.motion = self.get_motion_model()
         self.calc_obstacle_map(ox, oy)
+        self.show_animation = show_animation
 
     class Node:
 
@@ -82,7 +83,7 @@ class AStarPlanner:
 
             # show graph
 
-            if show_animation:  # pragma: no cover
+            if self.show_animation:  # pragma: no cover
 
                 plt.plot(self.calc_grid_position(current.x, self.min_x),
 
@@ -312,7 +313,7 @@ class AStarPlanner:
         return motion
 
 def my_astar(loc_b_y,loc_b_x,loc_y_y,loc_y_x):
-
+    show_animation = False
     print(__file__ + " start!!")
 
 

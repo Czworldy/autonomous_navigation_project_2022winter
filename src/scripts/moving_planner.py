@@ -233,89 +233,6 @@ class Line_Point(object):
     
     return Vout_A
 
-def To_Aim_Point(aim_position, line_point, end_radian, gazebo_sim):
-
-  global Start_Point
-
-  PID.PID_Clear()
-  loc_b0_x = 0.0
-  loc_b0_y = 0.0
-  Cur_Radian = 0.0
-  Speed_X = 0.0
-
-  while True:
-
-    
-    pose = gazebo_sim.get_model_state().pose
-    quat = pose.orientation
-    
-    from scipy.spatial.transform import Rotation as R
-    r1 = R.from_quat([quat.x, quat.y, quat.z, quat.w])
-    Cur_Radian = r1.as_euler('xyz', degrees=False)[2]
-    
-    loc_b0_x = pose.position.x*1000  
-    loc_b0_y = pose.position.y*1000
-    Cur_Pos = Node(loc_b0_x,loc_b0_y)
-
-    if line_point.myPoint.GetLength(Cur_Pos,aim_position) < 300:
-      #action.sendCommand(vx=0, vy=0, vw=0)
-      Start_Point = Node(loc_b0_x,loc_b0_y)
-      break
-
-    
-    #print Cur_Pos.x,Cur_Pos.y
-    Speed_X,Speed_Rotation = line_point.GoLine(Cur_Pos,Cur_Radian,A_PID)    #GoLine(self,cur_pos,cur_radian,A_PID):
-
-    # action.sendCommand(vx=Speed_X, vy=0, vw=Speed_Rotation)
-    gazebo_sim.pub_cmd_vel([Speed_X/1000, Speed_Rotation])
-    #print (Speed_X,Speed_Rotation)
-    print (aim_position.x,aim_position.y)
-
-    time.sleep(0.02)
-
-  # if isToEnd == True:
-  #   End_Radian = -3*pi/4 #line_point.myPoint.GetLineAngle(Start_Point,aim_position)   
-  #有问题 还要单独写转角函数？
-  #写了，真的解决了吗？
-  #利用向右下，可不可以都调整为-135°？
-  #                               
-  #要不要指向下一个点？
-  # elif isToEnd == False:
-  #   End_Radian = pi/4
-
-  End_Radian = end_radian
-
-  # print (End_Radian)
-
-
-  PID.PID_Clear()
-  while True:
-
-    # for robot_blue in vision_frame.robots_blue:
-    #   #print('Robot Blue {} pos: {} {}'.format(robot_blue.robot_id, robot_blue.x,robot_blue.y))
-    #   if robot_blue.robot_id == 0:
-    #     Cur_Radian = robot_blue.orientation
-    #     break
-    pose = gazebo_sim.get_model_state().pose
-    quat = pose.orientation
-    
-    from scipy.spatial.transform import Rotation as R
-    r1 = R.from_quat([quat.x, quat.y, quat.z, quat.w])
-    Cur_Radian = r1.as_euler('xyz', degrees=False)[2]
-
-    if math.fabs(End_Radian - Cur_Radian) < 15 * DEG2RAD:
-      #action.sendCommand(vx=0, vy=0, vw=0)
-      break
-    if math.fabs(math.fabs(End_Radian) + math.fabs(Cur_Radian)- 2 * pi ) < 20 * DEG2RAD:   #-pi到pi有突变
-      #action.sendCommand(vx=0, vy=0, vw=0)
-      break
-
-    Speed_Rotation = line_point.Turn(End_Radian,Cur_Radian,A_PID)
-    # action.sendCommand(vx=0, vy=0, vw=Speed_Rotation)
-    gazebo_sim.pub_cmd_vel([0, Speed_Rotation])
-
-    time.sleep(0.02)
-  print ('arrive:{},{}'.format(aim_position.x,aim_position.y))
 def rount_filter(rx,ry,line_point):
 
   corner_point = []
@@ -410,6 +327,7 @@ def rount_filter(rx,ry,line_point):
   plt.plot(x, y, 'ro')
   x_curve, y_curve = smoothing_base_bezier(x, y, k=0.3, closed=False)
   plt.plot(x_curve, y_curve, label='$k=0.3$')
+  plt.axis('equal')
   plt.show()
 
   print (x_curve, y_curve)
@@ -437,7 +355,91 @@ def rount_filter(rx,ry,line_point):
   rount_radian.reverse()
 
   #return r_rest_point,rount_radian,bk_rount_radian
-  return x_curve,y_curve,rount_radian,bk_rount_radian
+  return x_curve,y_curve,rount_radian,bk_rount_radian 
+
+def To_Aim_Point(aim_position, line_point, end_radian, gazebo_sim):
+
+  global Start_Point
+
+  PID.PID_Clear()
+  loc_b0_x = 0.0
+  loc_b0_y = 0.0
+  Cur_Radian = 0.0
+  Speed_X = 0.0
+
+  while True:
+
+    
+    pose = gazebo_sim.get_model_state().pose
+    quat = pose.orientation
+    
+    from scipy.spatial.transform import Rotation as R
+    r1 = R.from_quat([quat.x, quat.y, quat.z, quat.w])
+    Cur_Radian = r1.as_euler('xyz', degrees=False)[2]
+    
+    loc_b0_x = pose.position.x*1000  
+    loc_b0_y = pose.position.y*1000
+    Cur_Pos = Node(loc_b0_x,loc_b0_y)
+
+    if line_point.myPoint.GetLength(Cur_Pos,aim_position) < 250:
+      #action.sendCommand(vx=0, vy=0, vw=0)
+      Start_Point = Node(loc_b0_x,loc_b0_y)
+      break
+
+    
+    #print Cur_Pos.x,Cur_Pos.y
+    Speed_X,Speed_Rotation = line_point.GoLine(Cur_Pos,Cur_Radian,A_PID)    #GoLine(self,cur_pos,cur_radian,A_PID):
+
+    # action.sendCommand(vx=Speed_X, vy=0, vw=Speed_Rotation)
+    gazebo_sim.pub_cmd_vel([Speed_X/1000, Speed_Rotation])
+    #print (Speed_X,Speed_Rotation)
+    # print (aim_position.x,aim_position.y)
+
+    time.sleep(0.01)
+
+  # if isToEnd == True:
+  #   End_Radian = -3*pi/4 #line_point.myPoint.GetLineAngle(Start_Point,aim_position)   
+  #有问题 还要单独写转角函数？
+  #写了，真的解决了吗？
+  #利用向右下，可不可以都调整为-135°？
+  #                               
+  #要不要指向下一个点？
+  # elif isToEnd == False:
+  #   End_Radian = pi/4
+
+  End_Radian = end_radian
+
+  # print (End_Radian)
+
+
+  PID.PID_Clear()
+  while True:
+
+    # for robot_blue in vision_frame.robots_blue:
+    #   #print('Robot Blue {} pos: {} {}'.format(robot_blue.robot_id, robot_blue.x,robot_blue.y))
+    #   if robot_blue.robot_id == 0:
+    #     Cur_Radian = robot_blue.orientation
+    #     break
+    pose = gazebo_sim.get_model_state().pose
+    quat = pose.orientation
+    
+    from scipy.spatial.transform import Rotation as R
+    r1 = R.from_quat([quat.x, quat.y, quat.z, quat.w])
+    Cur_Radian = r1.as_euler('xyz', degrees=False)[2]
+
+    if math.fabs(End_Radian - Cur_Radian) < 12 * DEG2RAD:
+      #action.sendCommand(vx=0, vy=0, vw=0)
+      break
+    if math.fabs(math.fabs(End_Radian) + math.fabs(Cur_Radian)- 2 * pi ) < 12 * DEG2RAD:   #-pi到pi有突变
+      #action.sendCommand(vx=0, vy=0, vw=0)
+      break
+
+    Speed_Rotation = line_point.Turn(End_Radian,Cur_Radian,A_PID)
+    # action.sendCommand(vx=0, vy=0, vw=Speed_Rotation)
+    gazebo_sim.pub_cmd_vel([0, Speed_Rotation])
+
+    time.sleep(0.02)
+  print ('arrive:{},{}'.format(aim_position.x,aim_position.y))
 
 if __name__ == '__main__':
 
@@ -477,15 +479,23 @@ if __name__ == '__main__':
   # debugger.draw_some_points(rx, ry)
   from map_reader import readMapObstacles
   from gazebo_simulation import GazeboSimulation
-  from astar import AStarPlanner, show_animation
+  from astar import AStarPlanner
   import rospy
   import rospkg
   INIT_POSITION = [-2, 3, 1.57]
+  astar_resolution = 0.1 # too small 0.05
+  moving_smooth = True
+  show_animation = True
   parser = argparse.ArgumentParser(description = 'my BARN navigation challenge')
   parser.add_argument('--world_idx', type=int, default=1, help='world index')
   args = parser.parse_args()
   
-  rospy.init_node('planner', anonymous=True)
+  if args.world_idx < 200: 
+    robot_size = 0.47 # too large for world 299 0.45
+  else:
+    robot_size = 0.4
+  
+  
   
   Start_Point = Node(INIT_POSITION[0]*1000,INIT_POSITION[1]*1000)
   aim_position = Node(INIT_POSITION[0]*1000+10,INIT_POSITION[1]*1000+10) #调整姿态
@@ -505,21 +515,33 @@ if __name__ == '__main__':
     plt.plot(gx, gy, "xb")
     plt.grid(True)
     plt.axis("equal") 
-  a_star = AStarPlanner(ox, oy, 0.1, 0.45)
+  a_star = AStarPlanner(ox, oy, astar_resolution, robot_size, show_animation)
   rx, ry = a_star.planning(sx, sy, gx, gy)
   # print(rx, ry)
   if show_animation:  
     plt.plot(rx, ry, "-r")
     plt.pause(0.001)
-    plt.show()
+    # plt.show()
 
   rx.reverse()
   ry.reverse()
 
   print (rx,ry)
 
-  x_curve,y_curve,rount_radian,bk_rount_radian = rount_filter(rx,ry,line_point)
-
+  if moving_smooth == False:
+    x_curve = rx
+    y_curve = ry
+    rount_radian = []
+    for i in range(len(x_curve)):
+      if i == len(x_curve) - 1:
+        break
+      rount_radian.append(line_point.myPoint.GetLineAngle(Node(x_curve[i],y_curve[i]),Node(x_curve[i+1],y_curve[i+1])))
+  else:
+    x_curve,y_curve,rount_radian,bk_rount_radian = rount_filter(rx,ry,line_point)
+    
+    
+    
+  rospy.init_node('planner', anonymous=True)
 
   # sta_rad = line_point.myPoint.GetLineAngle( Start_Point , Node(-2000,13500))
   # print ("aim_angle::::::::::",sta_rad)
@@ -529,29 +551,34 @@ if __name__ == '__main__':
   
   # quit()
 
-  for x in range(5):
+  # for x in range(1):
 
-    for i in range(len(x_curve)):
-      aim_position = Node(x_curve[i]*1000,y_curve[i]*1000)
-      line_point = Line_Point(aim_position,300.0,800.0,300.0,1)   #450.0   50.0
-      if i == len(x_curve) - 1:
-        To_Aim_Point(aim_position,line_point,bk_rount_radian[0], gazebo_sim)
-      else:
-        To_Aim_Point(aim_position,line_point,rount_radian[i], gazebo_sim)
+  for i in range(len(x_curve)):
+    aim_position = Node(x_curve[i]*1000,y_curve[i]*1000)
+    line_point = Line_Point(aim_position,300.0,600.0,100.0,1)   #450.0   50.0
+    if i == len(x_curve) - 1:
+      # To_Aim_Point(aim_position,line_point,bk_rount_radian[0], gazebo_sim)
+      pass
+    else:
+      To_Aim_Point(aim_position,line_point,rount_radian[i], gazebo_sim)
+  
+  gazebo_sim.pub_cmd_vel([0, 0])
 
-    x_curve = x_curve[::-1] #reverse
-    y_curve = y_curve[::-1]
+    # x_curve = x_curve[::-1] #reverse
+    # y_curve = y_curve[::-1]
 
 
-    for i in range(len(x_curve)):
-      aim_position = Node(x_curve[i]*1000,y_curve[i]*1000)
-      line_point = Line_Point(aim_position,300.0,800.0,300.0,1)   #450.0   50.0
-      if i == len(x_curve) - 1:
-        To_Aim_Point(aim_position,line_point,rount_radian[0], gazebo_sim)
-      else:
-        To_Aim_Point(aim_position,line_point,bk_rount_radian[i], gazebo_sim)
+    # for i in range(len(x_curve)):
+    #   aim_position = Node(x_curve[i]*1000,y_curve[i]*1000)
+    #   line_point = Line_Point(aim_position,300.0,800.0,300.0,1)   #450.0   50.0
+    #   if i == len(x_curve) - 1:
+    #     To_Aim_Point(aim_position,line_point,rount_radian[0], gazebo_sim)
+    #   else:
+    #     To_Aim_Point(aim_position,line_point,bk_rount_radian[i], gazebo_sim)
 
-    x_curve = x_curve[::-1]
-    y_curve = y_curve[::-1]
+    # x_curve = x_curve[::-1]
+    # y_curve = y_curve[::-1]
+    #250mm 12度 0.45 0.1 300 600 100只过不了150
+    #250mm 12度 0.45 0.1 300 600 100只过不了150 -> 0.47 可过150 299有点final小问题
 
   # action.sendCommand(vx=0, vy=0, vw=0)#停下

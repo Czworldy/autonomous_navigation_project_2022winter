@@ -29,10 +29,10 @@ def path_coord_to_gazebo_coord(x, y):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'test BARN navigation challenge')
-    parser.add_argument('--world_idx', type=int, default=0)
+    parser.add_argument('--world_idx', type=int, default=50)
     
     # TODO: TEST MAP 50, 150, 200
-    parser.add_argument('--gui', action="store_true")
+    parser.add_argument('--gui', action="store_true", default=True)
     parser.add_argument('--out', type=str, default="out.txt")
     args = parser.parse_args()
     
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     pos = gazebo_sim.get_model_state().pose.position
     curr_coor = (pos.x, pos.y)
     collided = True
-    
+    print(">>>>>>>>>>>>>>>>>> Resetting the robot <<<<<<<<<<<<<<<<<<")
     # check whether the robot is reset, the collision is False
     while compute_distance(init_coor, curr_coor) > 0.1 or collided:
         gazebo_sim.reset() # Reset to the initial position
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         curr_coor = (pos.x, pos.y)
         collided = gazebo_sim.get_hard_collision()
         time.sleep(1)
-
+    print(">>>>>>>>>>>>>>>>>> Robot is reset <<<<<<<<<<<<<<<<<<")
 
 
 
@@ -110,19 +110,19 @@ if __name__ == "__main__":
     
     # Make sure your navigation stack recives a goal of (0, 10, 0), which is 10 meters away
     # along postive y-axis.
-    import actionlib
-    from geometry_msgs.msg import Quaternion
-    from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
-    nav_as = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
-    mb_goal = MoveBaseGoal()
-    mb_goal.target_pose.header.frame_id = 'odom'
-    mb_goal.target_pose.pose.position.x = GOAL_POSITION[0]
-    mb_goal.target_pose.pose.position.y = GOAL_POSITION[1]
-    mb_goal.target_pose.pose.position.z = 0
-    mb_goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+    # import actionlib
+    # from geometry_msgs.msg import Quaternion
+    # from move_base_msgs.msg import MoveBaseGoal, MoveBaseAction
+    # nav_as = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
+    # mb_goal = MoveBaseGoal()
+    # mb_goal.target_pose.header.frame_id = 'odom'
+    # mb_goal.target_pose.pose.position.x = GOAL_POSITION[0]
+    # mb_goal.target_pose.pose.position.y = GOAL_POSITION[1]
+    # mb_goal.target_pose.pose.position.z = 0
+    # mb_goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
 
-    nav_as.wait_for_server()
-    nav_as.send_goal(mb_goal)
+    # nav_as.wait_for_server()
+    # nav_as.send_goal(mb_goal)
 
     ##########################################################################################
     ## 2. Start navigation
@@ -144,6 +144,9 @@ if __name__ == "__main__":
     start_time = curr_time
     start_time_cpu = time.time()
     collided = False
+    
+    print(">>>>>>>>>>>>>>>>>> Start navigation! <<<<<<<<<<<<<<<<<<")
+    print("goal_coor: ", goal_coor)
     
     while compute_distance(goal_coor, curr_coor) > 1 and not collided and curr_time - start_time < 100:
         curr_time = rospy.get_time()
