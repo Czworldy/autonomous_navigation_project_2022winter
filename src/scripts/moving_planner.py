@@ -493,7 +493,7 @@ if __name__ == '__main__':
   if args.world_idx < 200: 
     robot_size = 0.47 # too large for world 299 0.45
   else:
-    robot_size = 0.4
+    robot_size = 0.47
   
   
   
@@ -515,8 +515,16 @@ if __name__ == '__main__':
     plt.plot(gx, gy, "xb")
     plt.grid(True)
     plt.axis("equal") 
-  a_star = AStarPlanner(ox, oy, astar_resolution, robot_size, show_animation)
-  rx, ry = a_star.planning(sx, sy, gx, gy)
+  is_found_goal = False
+  replan = False
+  while is_found_goal == False:
+    if replan == True:
+      show_animation = False
+    a_star = AStarPlanner(ox, oy, astar_resolution, robot_size, show_animation)
+    rx, ry, is_found_goal = a_star.planning(sx, sy, gx, gy)
+    robot_size = robot_size - 0.01
+    replan = True
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>Replan<<<<<<<<<<<<<<<<<<<<<<<<<<")
   # print(rx, ry)
   if show_animation:  
     plt.plot(rx, ry, "-r")
